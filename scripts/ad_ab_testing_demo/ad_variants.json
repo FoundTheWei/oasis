@@ -2,27 +2,130 @@
   "campaign_id": "summer_sale_2023",
   "campaign_name": "Summer Sale 2023",
   "daily_budget": 200.0,
+  "campaign_goals": [
+    {
+      "type": "conversion",
+      "target": 2.5,
+      "weight": 0.6
+    },
+    {
+      "type": "awareness",
+      "target": 30.0,
+      "weight": 0.4
+    }
+  ],
+  "target_audience": [
+    {
+      "name": "existing_customers",
+      "weight": 60
+    },
+    {
+      "name": "new_visitors",
+      "weight": 40
+    }
+  ],
+  "placement_strategy": [
+    {
+      "position": "feed",
+      "frequency": 70
+    },
+    {
+      "position": "sidebar",
+      "frequency": 30
+    }
+  ],
+  "campaign_duration": {
+    "start_date": "2023-06-01",
+    "end_date": "2023-06-30",
+    "time_segments": [
+      {
+        "name": "morning",
+        "start_hour": 6,
+        "end_hour": 11,
+        "budget_allocation": 25
+      },
+      {
+        "name": "afternoon",
+        "start_hour": 12,
+        "end_hour": 17,
+        "budget_allocation": 30
+      },
+      {
+        "name": "evening",
+        "start_hour": 18,
+        "end_hour": 23,
+        "budget_allocation": 45
+      }
+    ]
+  },
   "variants": [
     {
       "id": "variant_a",
       "headline": "Summer Sale: 30% Off Everything!",
       "body_text": "Beat the heat with our biggest summer sale ever. Limited time only!",
       "image_url": "images/summer_sale_1.jpg",
-      "cta_text": "Shop Now"
+      "cta_text": "Shop Now",
+      "color_scheme": "blue_orange",
+      "target_demographics": ["millennials", "gen_z"],
+      "keywords": ["sale", "discount", "summer", "limited time"],
+      "expected_ctr": 0.028,
+      "expected_conversion": 0.018
     },
     {
       "id": "variant_b",
       "headline": "Summer Clearance: Prices Slashed!",
       "body_text": "End of season deals you can't miss. Up to 30% off while supplies last.",
       "image_url": "images/summer_sale_2.jpg",
-      "cta_text": "Get Deals"
+      "cta_text": "Get Deals",
+      "color_scheme": "red_yellow",
+      "target_demographics": ["gen_x", "boomers"],
+      "keywords": ["clearance", "deals", "discount", "limited supply"],
+      "expected_ctr": 0.025,
+      "expected_conversion": 0.022
     },
     {
       "id": "variant_c",
       "headline": "Hot Deals for Cool Summer Savings",
       "body_text": "Enjoy 30% discounts on all summer essentials. Don't wait - shop now!",
       "image_url": "images/summer_sale_3.jpg",
-      "cta_text": "Explore Sale"
+      "cta_text": "Explore Sale",
+      "color_scheme": "green_blue",
+      "target_demographics": ["millennials", "gen_x"],
+      "keywords": ["hot deals", "savings", "summer", "essentials"],
+      "expected_ctr": 0.023,
+      "expected_conversion": 0.020
+    },
+    {
+      "id": "variant_d",
+      "headline": "Last Chance: Summer Favorites at 30% Off",
+      "body_text": "Get your summer favorites before they're gone! 30% discount on everything.",
+      "image_url": "images/summer_sale_4.jpg",
+      "cta_text": "Shop Sale",
+      "color_scheme": "purple_orange",
+      "target_demographics": ["gen_z", "millennials"],
+      "keywords": ["last chance", "favorites", "summer", "discount"],
+      "expected_ctr": 0.030,
+      "expected_conversion": 0.015,
+      "scarcity_messaging": true
     }
-  ]
+  ],
+  "competitor_ads": [
+    {
+      "company": "CompetitorA",
+      "headline": "Summer Flash Sale: 25% Off",
+      "estimated_budget": 180.0,
+      "estimated_reach": 25000
+    },
+    {
+      "company": "CompetitorB",
+      "headline": "End of Season Clearance - Up to 35% Off",
+      "estimated_budget": 220.0,
+      "estimated_reach": 30000
+    }
+  ],
+  "post_campaign_analysis": {
+    "enabled": true,
+    "follow_up_duration_days": 14,
+    "metrics": ["retention", "repeat_purchase", "brand_lift"]
+  }
 } 

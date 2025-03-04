@@ -1,0 +1,99 @@
+analytics:
+  engagement_metrics:
+  - clicks
+  - view_time
+  - shares
+  - comments
+  - conversions
+  - return_rate
+  export_formats:
+  - csv
+  - json
+  - dashboard
+  segment_analysis: true
+  sentiment_analysis: true
+  track_conversion_funnel: true
+data:
+  ad_config_path: ./scripts/ad_ab_testing_demo/ad_variants.json
+  db_path: ./ad_testing.db
+  demographic_segments:
+  - name: gen_z
+    percentage: 25
+    properties:
+      age_range:
+      - 16
+      - 24
+      behavior: impulsive_browsing
+      interests:
+      - gaming
+      - social_media
+      - technology
+      - sustainability
+  - name: millennials
+    percentage: 40
+    properties:
+      age_range:
+      - 25
+      - 40
+      behavior: comparative_shopping
+      interests:
+      - travel
+      - fitness
+      - food
+      - technology
+  - name: gen_x
+    percentage: 25
+    properties:
+      age_range:
+      - 41
+      - 56
+      behavior: research_heavy
+      interests:
+      - family
+      - finance
+      - health
+      - home_improvement
+  - name: boomers
+    percentage: 10
+    properties:
+      age_range:
+      - 57
+      - 75
+      behavior: brand_loyal
+      interests:
+      - health
+      - travel
+      - news
+      - gardening
+  pair_path: ./data/emall/product.json
+  user_path: ./data/reddit/user_data_36.json
+inference:
+  is_openai_model: false
+  model_type: local-model
+  server_url:
+  - host: 127.0.0.1
+    ports:
+    - 1234
+  stop_tokens:
+  - <|im_end|>
+  - </s>
+simulation:
+  action_space_file_path: ./scripts/ad_ab_testing_demo/action_space_prompt.txt
+  activate_prob: 0.5
+  ad_exposure_prob: 0.8
+  ad_fatigue_factor: 0.2
+  ad_results_dir: ./ad_results/run_20250303_230148
+  allow_self_rating: false
+  clock_factor: 10
+  controllable_user: true
+  enable_retargeting: true
+  follow_post_agent: false
+  max_rec_post_len: 20
+  mute_post_agent: false
+  num_timesteps: 3
+  recsys_type: reddit
+  refresh_rec_post_count: 5
+  round_post_num: 5
+  seasonal_effects: true
+  show_score: true
+  time_of_day_effects: true

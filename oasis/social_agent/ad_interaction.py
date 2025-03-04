@@ -13,6 +13,7 @@
 # =========== Copyright 2023 @ CAMEL-AI.org. All Rights Reserved. ===========
 import json
 import logging
+import asyncio
 from datetime import datetime
 from typing import Dict, Any
 
@@ -85,15 +86,53 @@ async def process_ad(agent, ad_variant: AdVariant, campaign: AdCampaign, current
     ad_log.info(f"Agent {agent.agent_id} processing ad: {ad_variant.variant_id}")
     
     response = None
+    content = None
     try:
         if agent.is_openai_model:
             response = agent.model_backend.run(openai_messages)
             content = response.choices[0].message.content
         else:
-            mes_id = await agent.infe_channel.write_to_receive_queue(openai_messages)
-            mes_id, content = await agent.infe_channel.read_from_send_queue(mes_id)
+            # Use direct API call to LMStudio for more reliable interaction
+            import requests
+            import json
+            import sys
+            
+            # Get server URL from agent configuration
+            server_url = agent.inference_configs.get("server_url", [{"host": "127.0.0.1", "ports": [1234]}])[0]
+            host = server_url.get("host", "127.0.0.1")
+            port = server_url.get("ports", [1234])[0]
+            
+            url = f"http://{host}:{port}/v1/chat/completions"
+            
+            payload = {
+                "model": "unsloth/deepseek-r1-distill-llama-8b",  # This should be configurable
+                "messages": openai_messages,
+                "temperature": 0.7,
+                "max_tokens": 500
+            }
+            
+            headers = {
+                "Content-Type": "application/json"
+            }
+            
+            ad_log.info(f"Sending direct API request to LMStudio at {url}")
+            response = requests.post(url, headers=headers, data=json.dumps(payload), timeout=30)
+            
+            if response.status_code == 200:
+                result = response.json()
+                content = result['choices'][0]['message']['content']
+                ad_log.info(f"Got LMStudio response: {content[:100]}...")
+            else:
+                ad_log.error(f"LMStudio API error: {response.status_code}, {response.text}")
+                return False
     except Exception as e:
         ad_log.error(f"Error getting agent response to ad: {e}")
+        import traceback
+        ad_log.error(traceback.format_exc())
+        return False
+    
+    if content is None:
+        ad_log.error(f"No content received from LLM for agent {agent.agent_id}")
         return False
     
     ad_log.info(f"Agent {agent.agent_id} response to ad: {content}")

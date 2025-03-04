@@ -16,6 +16,7 @@ from typing import Dict, List, Any, Optional
 import pandas as pd
 import matplotlib.pyplot as plt
 import json
+from datetime import datetime
 
 from oasis.ad_testing.ad_campaign import AdCampaign
 
@@ -40,6 +41,36 @@ class AdMetricsTracker:
             campaign: The campaign to track
         """
         self.campaigns[campaign.campaign_id] = campaign
+    
+    def record_ad_impression(self, agent_id: str, variant_id: str, content: str):
+        """Record an ad impression
+        
+        Args:
+            agent_id: ID of the agent who saw the impression
+            variant_id: ID of the ad variant shown
+            content: Content of the ad
+        """
+        # Find the campaign that contains this variant
+        for campaign_id, campaign in self.campaigns.items():
+            for variant in campaign.variants:
+                if variant.variant_id == variant_id:
+                    campaign.record_impression(variant_id, datetime.now())
+                    return
+    
+    def record_ad_click(self, agent_id: str, variant_id: str, content: str):
+        """Record an ad click
+        
+        Args:
+            agent_id: ID of the agent who clicked
+            variant_id: ID of the ad variant clicked
+            content: Content of the ad
+        """
+        # Find the campaign that contains this variant
+        for campaign_id, campaign in self.campaigns.items():
+            for variant in campaign.variants:
+                if variant.variant_id == variant_id:
+                    campaign.record_click(variant_id, datetime.now())
+                    return
     
     def get_campaign_summary(self, campaign_id: str) -> Optional[Dict[str, Any]]:
         """Get summary metrics for a campaign

@@ -20,12 +20,18 @@ import logging
 import os
 import random
 import sys
+import time
+import requests
 from datetime import datetime, timedelta
-from typing import Any, List
+from pathlib import Path
+from typing import Dict, List, Any, Optional, Tuple
 
-from colorama import Back, Fore
+from colorama import Back, Fore, Style, init
 from tqdm import tqdm
 from yaml import safe_load
+
+# Initialize colorama
+init(autoreset=True)
 
 sys.path.append(
     os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
@@ -36,8 +42,10 @@ from oasis.social_agent.agents_generator import (gen_control_agents_with_data,
 from oasis.social_platform.channel import Channel
 from oasis.social_platform.platform import Platform
 from oasis.social_platform.typing import ActionType
-from oasis.ad_testing import AdVariant, AdCampaign, AdMetricsTracker
-from oasis.social_agent.ad_interaction import process_ad
+from oasis.ad_testing import AdMetricsTracker
+from oasis.ad_testing.ad_campaign import AdCampaign
+from oasis.ad_testing.ad_variant import AdVariant
+from scripts.ad_ab_testing_demo.ad_metrics_reporter import AdMetricsReporter
 
 # Setup logging
 social_log = logging.getLogger(name="social")
@@ -271,10 +279,64 @@ async def running(
                     ad_variant = campaign.select_variant_for_agent(profile)
                     
                     if ad_variant:
-                        # Process ad for this agent
-                        ad_tasks.append(
-                            process_ad(agent, ad_variant, campaign, datetime.now())
+                        # Process ad for this agent using direct API approach
+                        # Record impression
+                        campaign.record_impression(ad_variant.variant_id, datetime.now())
+                        
+                        # Create prompt for LLM to determine if agent would click the ad
+                        ad_prompt = (
+                            f"You are shown the following advertisement:\n"
+                            f"Headline: {ad_variant.headline}\n"
+                            f"Content: {ad_variant.body_text}\n"
+                            f"Call to Action: {ad_variant.cta_text}\n\n"
+                            f"Based on your profile and interests, would you click on this ad? "
+                            f"Please respond with either 'Yes, I would click this ad because...' or "
+                            f"'No, I would not click this ad because...' and explain your reasoning."
                         )
+                        
+                        # Get system message from agent
+                        system_message = agent.system_message.content
+                        
+                        # Prepare messages in OpenAI format
+                        messages = [
+                            {"role": "system", "content": system_message},
+                            {"role": "user", "content": ad_prompt}
+                        ]
+                        
+                        # Get server URL from inference configs
+                        server_url = inference_configs.get("server_url", [{"host": "127.0.0.1", "ports": [1234]}])[0]
+                        host = server_url.get("host", "127.0.0.1")
+                        port = server_url.get("ports", [1234])[0]
+                        
+                        url = f"http://{host}:{port}/v1/chat/completions"
+                        
+                        # Get model name from inference configs or use a default
+                        model_name = None
+                        if isinstance(inference_configs.get("model_type"), str):
+                            model_name = inference_configs.get("model_type")
+                        # If no model specified, use what we see in LMStudio UI
+                        if not model_name:
+                            model_name = "unsloth/deepseek-r1-distill-llama-8b"
+                        
+                        payload = {
+                            "model": model_name,
+                            "messages": messages,
+                            "temperature": 0.7,
+                            "max_tokens": 500
+                        }
+                        
+                        headers = {
+                            "Content-Type": "application/json"
+                        }
+                        
+                        # Create a task for processing this ad
+                        ad_tasks.append({
+                            "agent_id": agent.agent_id,
+                            "variant_id": ad_variant.variant_id,
+                            "url": url,
+                            "payload": payload,
+                            "headers": headers
+                        })
                 else:
                     # Regular social media actions
                     social_tasks.append(agent.perform_action_by_llm())
@@ -282,8 +344,60 @@ async def running(
         # Execute all ad processing tasks
         if ad_tasks:
             print(f"Processing {len(ad_tasks)} ad exposures...")
-            ad_results = await asyncio.gather(*ad_tasks)
-            ad_clicks = sum(ad_results)
+            ad_clicks = 0
+            
+            # Process each ad task directly
+            for task in ad_tasks:
+                agent_id = task["agent_id"]
+                variant_id = task["variant_id"]
+                url = task["url"]
+                payload = task["payload"]
+                headers = task["headers"]
+                
+                try:
+                    social_log.info(f"Agent {agent_id} processing ad: {variant_id}")
+                    print(f"Agent {agent_id} processing ad variant: {variant_id}")
+                    
+                    # Add better timeout and error handling
+                    response = requests.post(
+                        url, 
+                        headers=headers, 
+                        data=json.dumps(payload), 
+                        timeout=30
+                    )
+                    
+                    if response.status_code == 200:
+                        result = response.json()
+                        content = result['choices'][0]['message']['content']
+                        social_log.info(f"Got LMStudio response for agent {agent_id}: {content[:100]}...")
+                        print(f"Received response for agent {agent_id}")
+                        
+                        # Record click if agent decides to click
+                        if "yes" in content.lower() and "click" in content.lower():
+                            campaign.record_click(variant_id, datetime.now())
+                            social_log.info(f"Agent {agent_id} clicked ad: {variant_id}")
+                            metrics_tracker.record_ad_click(agent_id, variant_id, content)
+                            ad_clicks += 1
+                            print(f"👆 Agent {agent_id} clicked ad: {variant_id}")
+                        else:
+                            social_log.info(f"Agent {agent_id} did not click ad: {variant_id}")
+                            metrics_tracker.record_ad_impression(agent_id, variant_id, content)
+                            print(f"👁️ Agent {agent_id} viewed but did not click ad: {variant_id}")
+                    else:
+                        social_log.error(f"LMStudio API error: {response.status_code}, {response.text}")
+                        print(f"❌ API error for agent {agent_id}: {response.status_code}")
+                except requests.exceptions.Timeout:
+                    social_log.error(f"Timeout processing ad for agent {agent_id}")
+                    print(f"⏱️ Timeout processing ad for agent {agent_id}")
+                except requests.exceptions.ConnectionError:
+                    social_log.error(f"Connection error for agent {agent_id}. Check if LMStudio is running.")
+                    print(f"❌ Connection error for agent {agent_id}. Check if LMStudio is running at {url}")
+                except Exception as e:
+                    social_log.error(f"Error getting agent {agent_id} response to ad: {e}")
+                    print(f"❌ Error processing ad for agent {agent_id}: {str(e)}")
+                    import traceback
+                    social_log.error(traceback.format_exc())
+            
             print(f"Ad clicks: {ad_clicks} ({(ad_clicks/len(ad_tasks))*100:.1f}% CTR)")
         
         # Execute social tasks

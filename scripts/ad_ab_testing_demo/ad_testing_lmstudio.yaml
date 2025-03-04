@@ -4,6 +4,32 @@ data:
   pair_path: ./data/emall/product.json  # Path to the initial post file
   db_path: ./ad_testing.db  # Path for saving the social media database
   ad_config_path: ./scripts/ad_ab_testing_demo/ad_variants.json  # Path to ad variants configuration
+  # New demographic settings
+  demographic_segments:
+    - name: "gen_z"
+      percentage: 25
+      properties:
+        age_range: [16, 24]
+        interests: ["gaming", "social_media", "technology", "sustainability"]
+        behavior: "impulsive_browsing"
+    - name: "millennials"
+      percentage: 40
+      properties:
+        age_range: [25, 40]
+        interests: ["travel", "fitness", "food", "technology"]
+        behavior: "comparative_shopping"
+    - name: "gen_x"
+      percentage: 25
+      properties:
+        age_range: [41, 56]
+        interests: ["family", "finance", "health", "home_improvement"]
+        behavior: "research_heavy"
+    - name: "boomers"
+      percentage: 10
+      properties:
+        age_range: [57, 75]
+        interests: ["health", "travel", "news", "gardening"]
+        behavior: "brand_loyal"
 simulation:
   recsys_type: reddit
   controllable_user: true  # Whether to use a controllable user
@@ -20,10 +46,31 @@ simulation:
   refresh_rec_post_count: 5  # Number of posts an agent sees each time they refresh
   action_space_file_path: ./scripts/ad_ab_testing_demo/action_space_prompt.txt  # Path to the action_space_prompt file
   ad_results_dir: ./ad_results  # Directory to save ad test results
+  # New simulation enhancements
+  enable_retargeting: true  # Enable retargeting based on user behavior
+  ad_fatigue_factor: 0.2  # How quickly users tire of seeing the same ad (0-1)
+  seasonal_effects: true  # Consider seasonal effects on ad performance
+  time_of_day_effects: true  # Simulate varying engagement based on time of day
 inference:
   model_type: local-model  # Name you want to give your local model
   is_openai_model: false  # Set to false for non-OpenAI models
   server_url:
-    - host: "localhost"  # Local host where LMStudio is running
+    - host: "127.0.0.1"  # Local host where LMStudio is running
       ports: [1234]  # Default LMStudio API port
-  stop_tokens: ["<|im_end|>", "</s>"]  # Common stop tokens, adjust based on your model 
+  stop_tokens: ["<|im_end|>", "</s>"]  # Common stop tokens, adjust based on your model
+analytics:
+  # New advanced analytics configuration
+  track_conversion_funnel: true  # Track the entire conversion funnel
+  segment_analysis: true  # Enable demographic segment analysis
+  sentiment_analysis: true  # Analyze sentiment in user comments
+  engagement_metrics:
+    - clicks
+    - view_time
+    - shares
+    - comments
+    - conversions
+    - return_rate
+  export_formats:
+    - csv
+    - json
+    - dashboard 
