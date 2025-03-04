@@ -1,0 +1,28 @@
+{
+  "campaign_id": "summer_sale_2023",
+  "campaign_name": "Summer Sale 2023",
+  "daily_budget": 200.0,
+  "variants": [
+    {
+      "id": "variant_a",
+      "headline": "Summer Sale: 30% Off Everything!",
+      "body_text": "Beat the heat with our biggest summer sale ever. Limited time only!",
+      "image_url": "images/summer_sale_1.jpg",
+      "cta_text": "Shop Now"
+    },
+    {
+      "id": "variant_b",
+      "headline": "Summer Clearance: Prices Slashed!",
+      "body_text": "End of season deals you can't miss. Up to 30% off while supplies last.",
+      "image_url": "images/summer_sale_2.jpg",
+      "cta_text": "Get Deals"
+    },
+    {
+      "id": "variant_c",
+      "headline": "Hot Deals for Cool Summer Savings",
+      "body_text": "Enjoy 30% discounts on all summer essentials. Don't wait - shop now!",
+      "image_url": "images/summer_sale_3.jpg",
+      "cta_text": "Explore Sale"
+    }
+  ]
+} 
